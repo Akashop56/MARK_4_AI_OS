@@ -1,0 +1,17 @@
+# Security & Sensitive Key Files
+.env
+*.env
+.omniroute/
+
+# Python & Cache Directories
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+*.bak
+*.tmp
+
+# Temporary Sandbox & Test Output
+temp_exec.py
+*.log
+result.json
