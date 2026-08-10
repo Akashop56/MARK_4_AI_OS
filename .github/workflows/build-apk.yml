@@ -30,11 +30,11 @@ jobs:
 
       - name: Build Debug APK
         run: |
-  if [ -f "./gradlew" ]; then
-    ./gradlew assembleDebug -Dorg.gradle.jvmargs="-Xmx4g -XX:MaxMetaspaceSize=512m" --no-daemon --no-build-cache --stacktrace --info
-  else
-    gradle assembleDebug -Dorg.gradle.jvmargs="-Xmx4g -XX:MaxMetaspaceSize=512m" --no-daemon --no-build-cache --stacktrace --info
-  fi
+          if [ -f "./gradlew" ]; then
+            ./gradlew assembleDebug -Dorg.gradle.jvmargs="-Xmx4g -XX:MaxMetaspaceSize=512m" --no-daemon --no-build-cache --stacktrace --info
+          else
+            gradle assembleDebug -Dorg.gradle.jvmargs="-Xmx4g -XX:MaxMetaspaceSize=512m" --no-daemon --no-build-cache --stacktrace --info
+          fi
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
