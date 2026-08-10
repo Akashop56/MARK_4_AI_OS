@@ -16,8 +16,9 @@ class ProviderSettingsStore(private val context: Context) {
     private val activeModel = stringPreferencesKey("active_model")
 
     val activeConfig: Flow<ProviderConfig?> = context.providerDataStore.data.map { prefs ->
-        val provider = prefs[activeProvider] ?: return@map null
-        ProviderConfig(provider, AiProviderType.valueOf(provider), provider, prefs[activeModel] ?: "", "••••", active = true)
+        val providerName = prefs[activeProvider] ?: return@map null
+        val type = AiProviderType.entries.firstOrNull { it.name == providerName } ?: return@map null
+        ProviderConfig(type.name, type, type.name, prefs[activeModel] ?: "", "••••", active = true)
     }
 
     suspend fun setActive(type: AiProviderType, model: String) {

@@ -42,7 +42,7 @@ import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen(viewModel: MainViewModel = MainViewModel()) {
+fun MainScreen(viewModel: MainViewModel) {
     val state by viewModel.state.collectAsState()
     val messages by viewModel.messages.collectAsState()
     var input by remember { mutableStateOf("") }
