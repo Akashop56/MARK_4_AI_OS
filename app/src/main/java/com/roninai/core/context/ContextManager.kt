@@ -1,0 +1,41 @@
+package com.roninai.core.context
+
+import com.roninai.domain.model.ChatMessage
+import com.roninai.domain.model.ReasoningTrace
+import com.roninai.domain.model.UnderstandingResult
+
+class ContextManager(private val maxContextMessages: Int = 12) {
+    fun buildContext(understanding: UnderstandingResult, reasoningTrace: ReasoningTrace, recentConversation: List<ChatMessage>): BrainContext {
+        val relevantMessages = recentConversation.takeLast(maxContextMessages)
+        return BrainContext(
+            userInput = understanding.originalText,
+            resolvedReference = understanding.resolvedContext,
+            conversation = relevantMessages,
+            facts = reasoningTrace.facts,
+            contextAnalysis = reasoningTrace.contextAnalysis,
+            decision = reasoningTrace.decision,
+            systemInstruction = "You are RONIN AI, a newborn personal AI companion. Think clearly, respond naturally and briefly, use context, and never claim actions were performed without confirmation."
+        )
+    }
+}
+
+data class BrainContext(
+    val userInput: String,
+    val resolvedReference: String?,
+    val conversation: List<ChatMessage>,
+    val facts: List<String>,
+    val contextAnalysis: String,
+    val decision: String,
+    val systemInstruction: String
+) {
+    fun asPrompt(): String = buildString {
+        appendLine(systemInstruction)
+        resolvedReference?.let { appendLine("Resolved context: $it") }
+        if (facts.isNotEmpty()) appendLine("Extracted facts: ${facts.joinToString()}")
+        appendLine("Context analysis: $contextAnalysis")
+        appendLine("Reasoned decision: $decision")
+        appendLine("Recent conversation:")
+        conversation.forEach { appendLine("${it.role}: ${it.content}") }
+        appendLine("User input: $userInput")
+    }
+}
