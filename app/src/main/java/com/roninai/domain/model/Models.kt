@@ -35,3 +35,27 @@ data class ProviderConfig(
     val endpoint: String? = null,
     val active: Boolean = false
 )
+
+
+enum class InteractionClass { Conversation, Question, Command, LearningOpportunity, MemoryCandidate }
+
+data class ResponseAnalysis(
+    val interactionClass: InteractionClass,
+    val memoryCandidate: String?,
+    val learningOpportunity: Boolean
+)
+
+data class AiRequest(
+    val prompt: String,
+    val model: String
+)
+
+data class AiResponse(
+    val text: String
+)
+
+
+data class PendingMemoryCandidate(
+    val content: String,
+    val reason: String
+)

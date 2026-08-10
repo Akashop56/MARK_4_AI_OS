@@ -28,6 +28,7 @@ import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -45,6 +46,8 @@ import androidx.compose.ui.unit.dp
 fun MainScreen(viewModel: MainViewModel) {
     val state by viewModel.state.collectAsState()
     val messages by viewModel.messages.collectAsState()
+    val pendingMemory by viewModel.pendingMemory.collectAsState()
+    val error by viewModel.error.collectAsState()
     var input by remember { mutableStateOf("") }
     val pulse by rememberInfiniteTransition(label = "core").animateFloat(
         initialValue = 0.92f,
@@ -77,6 +80,22 @@ fun MainScreen(viewModel: MainViewModel) {
                         shape = RoundedCornerShape(18.dp),
                         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
                     ) { Text("${msg.role}: ${msg.content}", Modifier.padding(12.dp)) }
+                }
+            }
+            error?.let { Text(it, color = MaterialTheme.colorScheme.secondary, modifier = Modifier.padding(bottom = 8.dp)) }
+            pendingMemory?.let { candidate ->
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                ) {
+                    Column(Modifier.padding(12.dp)) {
+                        Text("Should I remember this?")
+                        Text(candidate.content, style = MaterialTheme.typography.bodySmall)
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            TextButton(onClick = { viewModel.confirmMemory(true) }) { Text("Remember") }
+                            TextButton(onClick = { viewModel.confirmMemory(false) }) { Text("Not now") }
+                        }
+                    }
                 }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {

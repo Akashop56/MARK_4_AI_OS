@@ -1,28 +1,54 @@
 package com.roninai.core.brain
 
+import com.roninai.core.context.ContextManager
+import com.roninai.core.response.ResponseAnalyzer
 import com.roninai.domain.model.ChatMessage
-import com.roninai.domain.model.IntentType
+import com.roninai.domain.model.PendingMemoryCandidate
+import com.roninai.experience.ExperienceSystem
 import com.roninai.memory.ShortTermMemory
+import com.roninai.providers.AiProviderRouter
 import com.roninai.reasoning.ReasoningLayer
 import com.roninai.understanding.UnderstandingEngine
 
 class RoninBrain(
     private val understandingEngine: UnderstandingEngine,
+    private val contextManager: ContextManager,
+    private val aiProviderRouter: AiProviderRouter,
+    private val responseAnalyzer: ResponseAnalyzer,
     private val reasoningLayer: ReasoningLayer,
-    private val shortTermMemory: ShortTermMemory
+    private val shortTermMemory: ShortTermMemory,
+    private val experienceSystem: ExperienceSystem
 ) {
-    fun processUserText(input: String): ChatMessage {
+    suspend fun processUserText(input: String): BrainTurn {
         val userMessage = ChatMessage(role = "user", content = input)
         shortTermMemory.add(userMessage)
+
         val understanding = understandingEngine.understand(input, shortTermMemory.current)
-        val reasoning = reasoningLayer.reason(understanding)
-        val response = when (understanding.intent) {
-            IntentType.Unknown -> "I need a clearer signal. Say it another way."
-            IntentType.Command -> "I understand the action. I’ll wait for your confirmation before doing anything."
-            IntentType.Preference -> "That may be worth remembering. Should I save it to long-term memory?"
-            IntentType.Correction -> "Understood. I’ll treat this as a correction and learn from it."
-            IntentType.Conversation -> "I’m following. ${reasoning.decision}"
+        reasoningLayer.reason(understanding)
+        val brainContext = contextManager.buildContext(understanding, shortTermMemory.current)
+
+        val aiResult = aiProviderRouter.think(brainContext)
+        val responseText = aiResult.getOrElse { error ->
+            experienceSystem.record(
+                problem = "AI provider request failed",
+                analysis = error.message ?: "Unknown provider error",
+                solution = "Keep the conversation state stable and ask the user to verify provider settings.",
+                futureImprovement = "Retry with another active provider only after user approval."
+            )
+            throw error
+        }.text
+
+        val assistantMessage = ChatMessage(role = "assistant", content = responseText)
+        shortTermMemory.add(assistantMessage)
+        val analysis = responseAnalyzer.analyze(understanding, responseText)
+        val memoryCandidate = analysis.memoryCandidate?.let { candidate ->
+            PendingMemoryCandidate(content = candidate, reason = "Classified as ${analysis.interactionClass}")
         }
-        return ChatMessage(role = "assistant", content = response).also(shortTermMemory::add)
+        return BrainTurn(message = assistantMessage, memoryCandidate = memoryCandidate)
     }
 }
+
+data class BrainTurn(
+    val message: ChatMessage,
+    val memoryCandidate: PendingMemoryCandidate?
+)

@@ -12,7 +12,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val container = (application as RoninApplication).container
-        val factory = MainViewModel.Factory(container.brain, container.shortTermMemory, container.voiceSystem)
+        val factory = MainViewModel.Factory(container.brain, container.shortTermMemory, container.longTermMemory, container.voiceSystem)
         setContent {
             RoninTheme {
                 MainScreen(viewModel = viewModel(factory = factory))

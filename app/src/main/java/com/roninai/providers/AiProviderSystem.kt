@@ -26,11 +26,11 @@ class AiProviderSystem(
         val url = when (type) {
             AiProviderType.OpenAI -> "https://api.openai.com/v1/models"
             AiProviderType.Groq -> "https://api.groq.com/openai/v1/models"
-            AiProviderType.Gemini -> "https://generativelanguage.googleapis.com/v1beta/models?key=$key"
+            AiProviderType.Gemini -> "https://generativelanguage.googleapis.com/v1beta/models"
             AiProviderType.Custom -> customEndpoint ?: return@withContext false
         }
         val requestBuilder = Request.Builder().url(url)
-        if (type != AiProviderType.Gemini) requestBuilder.header("Authorization", "Bearer $key")
+        if (type == AiProviderType.Gemini) requestBuilder.header("x-goog-api-key", key) else requestBuilder.header("Authorization", "Bearer $key")
         client.newCall(requestBuilder.build()).execute().use { it.isSuccessful }
     }
 }
