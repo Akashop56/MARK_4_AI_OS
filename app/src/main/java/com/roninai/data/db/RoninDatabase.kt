@@ -16,6 +16,9 @@ data class LongTermMemoryEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val content: String,
     val reason: String,
+    val category: String = "General",
+    val importanceScore: Double = 0.0,
+    val usefulnessScore: Double = 0.0,
     val createdAt: Long = System.currentTimeMillis()
 )
 
@@ -26,6 +29,8 @@ data class ExperienceEntity(
     val analysis: String,
     val solution: String,
     val futureImprovement: String,
+    val patternKey: String = "general",
+    val confidence: Double = 0.0,
     val createdAt: Long = System.currentTimeMillis()
 )
 
@@ -47,7 +52,7 @@ interface ExperienceDao {
     suspend fun insert(experience: ExperienceEntity)
 }
 
-@Database(entities = [LongTermMemoryEntity::class, ExperienceEntity::class], version = 1)
+@Database(entities = [LongTermMemoryEntity::class, ExperienceEntity::class], version = 2)
 abstract class RoninDatabase : RoomDatabase() {
     abstract fun longTermMemoryDao(): LongTermMemoryDao
     abstract fun experienceDao(): ExperienceDao

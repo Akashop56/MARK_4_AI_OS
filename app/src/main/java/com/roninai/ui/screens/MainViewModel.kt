@@ -29,6 +29,22 @@ class MainViewModel(
     val error: StateFlow<String?> = _error.asStateFlow()
     val state: StateFlow<RoninState> = voiceSystem.state
 
+    init {
+        viewModelScope.launch {
+            voiceSystem.transcript.collect { transcript ->
+                if (!transcript.isNullOrBlank()) {
+                    voiceSystem.consumeTranscript()
+                    send(transcript)
+                }
+            }
+        }
+        viewModelScope.launch {
+            voiceSystem.error.collect { voiceError ->
+                if (!voiceError.isNullOrBlank()) _error.value = voiceError
+            }
+        }
+    }
+
     fun send(text: String) {
         if (text.isBlank()) return
         viewModelScope.launch {
@@ -38,25 +54,38 @@ class MainViewModel(
                 .onSuccess { turn ->
                     _pendingMemory.value = turn.memoryCandidate
                     _messages.value = shortTermMemory.current
+                    voiceSystem.speak(turn.message.content)
                 }
                 .onFailure { throwable ->
                     _error.value = throwable.message ?: "RONIN could not think through the active provider."
                     _messages.value = shortTermMemory.current
+                    voiceSystem.idle()
                 }
-            voiceSystem.idle()
         }
     }
 
     fun confirmMemory(remember: Boolean) {
         val candidate = _pendingMemory.value ?: return
         viewModelScope.launch {
-            longTermMemory.saveWithPermission(candidate.content, candidate.reason, remember)
+            longTermMemory.saveWithPermission(
+                content = candidate.content,
+                reason = candidate.reason,
+                permissionGranted = remember,
+                category = candidate.category,
+                importanceScore = candidate.importanceScore,
+                usefulnessScore = candidate.usefulnessScore
+            )
             _pendingMemory.value = null
         }
     }
 
     fun toggleMic() {
         if (voiceSystem.microphoneEnabled) voiceSystem.startListening()
+    }
+
+    override fun onCleared() {
+        voiceSystem.release()
+        super.onCleared()
     }
 
     class Factory(

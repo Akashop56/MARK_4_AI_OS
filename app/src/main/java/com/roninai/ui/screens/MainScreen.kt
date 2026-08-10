@@ -1,5 +1,9 @@
 package com.roninai.ui.screens
 
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -39,7 +43,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,6 +55,10 @@ fun MainScreen(viewModel: MainViewModel) {
     val pendingMemory by viewModel.pendingMemory.collectAsState()
     val error by viewModel.error.collectAsState()
     var input by remember { mutableStateOf("") }
+    val context = LocalContext.current
+    val microphonePermissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) viewModel.toggleMic()
+    }
     val pulse by rememberInfiniteTransition(label = "core").animateFloat(
         initialValue = 0.92f,
         targetValue = 1.08f,
@@ -99,7 +109,16 @@ fun MainScreen(viewModel: MainViewModel) {
                 }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                Button(onClick = viewModel::toggleMic, enabled = state.name != "Speaking") { Text("Mic") }
+                Button(
+                    onClick = {
+                        if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                            viewModel.toggleMic()
+                        } else {
+                            microphonePermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                        }
+                    },
+                    enabled = state != com.roninai.domain.model.RoninState.SPEAKING && state != com.roninai.domain.model.RoninState.THINKING
+                ) { Text("Mic") }
                 OutlinedTextField(modifier = Modifier.weight(1f), value = input, onValueChange = { input = it }, placeholder = { Text("Speak or type to RONIN") })
                 Button(onClick = { viewModel.send(input); input = "" }) { Text("Send") }
             }

@@ -11,6 +11,7 @@ import com.roninai.experience.ExperienceSystem
 import com.roninai.learning.LearningSystem
 import com.roninai.memory.LongTermMemory
 import com.roninai.memory.ShortTermMemory
+import com.roninai.perception.PerceptionSystem
 import com.roninai.providers.AiProviderRouter
 import com.roninai.providers.AiProviderSystem
 import com.roninai.reasoning.ReasoningLayer
@@ -27,7 +28,8 @@ class AppContainer(context: Context) {
     val contextManager = ContextManager()
     val responseAnalyzer = ResponseAnalyzer()
     val reasoningLayer = ReasoningLayer()
-    val voiceSystem = VoiceSystem()
+    val voiceSystem = VoiceSystem(context)
+    val perceptionSystem = PerceptionSystem(context)
     val providerSettingsStore = ProviderSettingsStore(context)
     val apiKeyVault = ApiKeyVault(context)
     val aiProviderSystem = AiProviderSystem(apiKeyVault, providerSettingsStore)
@@ -38,6 +40,7 @@ class AppContainer(context: Context) {
         aiProviderRouter,
         responseAnalyzer,
         reasoningLayer,
+        learningSystem,
         shortTermMemory,
         experienceSystem
     )
